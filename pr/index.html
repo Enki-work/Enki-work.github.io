@@ -4,70 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prompter Camera — 4K HDR Video & Teleprompter</title>
-  <meta name="description" content="Record video while reading your script. The teleprompter overlay floats over the live camera feed. Flip pages hands-free with the volume button, Bluetooth remote, or keyboard.">
+  <meta name="description" content="Record video while reading your script. The teleprompter overlay floats over the live camera feed.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --border: rgba(255,255,255,0.08);
-      --accent: #5b8ff9;
-      --accent2: #a78bfa;
-      --text: #f0f0f5;
-      --muted: #8888aa;
-      --radius: 16px;
+      --bg: #0a0a0f; --surface: #111118; --border: rgba(255,255,255,0.08);
+      --accent: #5b8ff9; --accent2: #a78bfa; --text: #f0f0f5; --muted: #8888aa; --radius: 16px;
     }
-
     html { scroll-behavior: smooth; }
-
     body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
     }
 
     /* ── NAV ── */
     nav {
       position: fixed; top: 0; width: 100%; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
-      height: 60px;
-      background: rgba(10,10,15,0.85);
-      backdrop-filter: blur(20px);
+      padding: 0 5%; height: 60px;
+      background: rgba(10,10,15,0.88); backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
     .nav-logo {
-      font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
+      font-size: 17px; font-weight: 600; letter-spacing: -0.3px; white-space: nowrap;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .nav-links { display: flex; gap: 28px; list-style: none; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
-    .nav-links a:hover { color: var(--text); }
+    .nav-center { display: flex; gap: 28px; list-style: none; }
+    .nav-center a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+    .nav-center a:hover { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+
+    /* Language switcher */
+    .lang-switcher { position: relative; }
+    .lang-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 500;
+      padding: 6px 12px; border-radius: 20px; cursor: pointer;
+      transition: background .2s;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,0.1); }
+    .lang-btn svg { width: 14px; height: 14px; fill: var(--muted); transition: transform .2s; }
+    .lang-btn.open svg { transform: rotate(180deg); }
+    .lang-dropdown {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: #1a1a26; border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      min-width: 160px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+    .lang-dropdown.open { display: block; }
+    .lang-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer;
+      font-size: 13px; color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+    .lang-option:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .lang-option.active { color: var(--accent); background: rgba(91,143,249,0.08); }
+    .lang-flag { font-size: 16px; line-height: 1; }
+
     .nav-cta {
-      background: var(--accent);
-      color: #fff; text-decoration: none;
-      padding: 8px 18px; border-radius: 20px;
-      font-size: 14px; font-weight: 600;
-      transition: opacity .2s;
+      background: var(--accent); color: #fff; text-decoration: none;
+      padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: 600;
+      transition: opacity .2s; white-space: nowrap;
     }
     .nav-cta:hover { opacity: .85; }
 
     /* ── HERO ── */
     .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center;
-      padding: 100px 5% 80px;
-      position: relative;
-      overflow: hidden;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 100px 5% 80px;
+      position: relative; overflow: hidden;
     }
     .hero::before {
-      content: '';
-      position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0;
       background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,143,249,0.12) 0%, transparent 70%),
                   radial-gradient(ellipse 60% 40% at 80% 80%, rgba(167,139,250,0.08) 0%, transparent 60%);
       pointer-events: none;
@@ -77,34 +91,25 @@
       background: rgba(91,143,249,0.1); border: 1px solid rgba(91,143,249,0.3);
       padding: 5px 14px; border-radius: 20px;
       font-size: 12px; color: var(--accent); font-weight: 600;
-      letter-spacing: 0.5px; text-transform: uppercase;
-      margin-bottom: 24px;
+      letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 24px;
     }
     .hero h1 {
-      font-size: clamp(40px, 7vw, 80px);
-      font-weight: 700;
-      letter-spacing: -2px;
-      line-height: 1.08;
-      margin-bottom: 20px;
+      font-size: clamp(36px, 7vw, 80px); font-weight: 700;
+      letter-spacing: -2px; line-height: 1.08; margin-bottom: 20px;
     }
     .hero h1 span {
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero-sub {
-      font-size: clamp(16px, 2.5vw, 20px);
-      color: var(--muted);
-      max-width: 560px;
-      margin: 0 auto 40px;
-      line-height: 1.5;
+      font-size: clamp(15px, 2.5vw, 19px); color: var(--muted);
+      max-width: 560px; margin: 0 auto 40px; line-height: 1.55;
     }
     .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--accent);
-      color: #fff; text-decoration: none;
-      padding: 14px 28px; border-radius: 14px;
-      font-size: 16px; font-weight: 600;
+      background: var(--accent); color: #fff; text-decoration: none;
+      padding: 14px 28px; border-radius: 14px; font-size: 16px; font-weight: 600;
       transition: opacity .2s, transform .2s;
     }
     .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
@@ -112,75 +117,42 @@
       display: inline-flex; align-items: center; gap: 8px;
       background: rgba(255,255,255,0.06); border: 1px solid var(--border);
       color: var(--text); text-decoration: none;
-      padding: 14px 28px; border-radius: 14px;
-      font-size: 16px; font-weight: 600;
+      padding: 14px 28px; border-radius: 14px; font-size: 16px; font-weight: 600;
       transition: background .2s, transform .2s;
     }
     .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-
-    /* App Store badge SVG-style icon inline */
     .apple-icon { width: 18px; height: 18px; fill: currentColor; }
 
     /* ── PHONE MOCKUP ── */
-    .phone-wrap {
-      margin-top: 64px;
-      position: relative;
-      display: inline-block;
-    }
+    .phone-wrap { margin-top: 64px; position: relative; display: inline-block; }
     .phone-frame {
-      width: 280px;
-      height: 570px;
-      border-radius: 44px;
-      border: 2px solid rgba(255,255,255,0.15);
-      background: #0d0d14;
+      width: 280px; height: 570px; border-radius: 44px;
+      border: 2px solid rgba(255,255,255,0.15); background: #0d0d14;
       box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      position: relative;
+      display: flex; flex-direction: column; overflow: hidden; position: relative;
     }
     .phone-notch {
-      width: 100px; height: 30px;
-      background: #0d0d14;
+      width: 100px; height: 30px; background: #0d0d14;
       border-bottom-left-radius: 18px; border-bottom-right-radius: 18px;
-      margin: 0 auto;
-      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      z-index: 2;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top: none;
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 2;
+      border: 2px solid rgba(255,255,255,0.1); border-top: none;
     }
-    .phone-screen {
-      flex: 1;
-      display: flex; flex-direction: column;
-      padding-top: 40px;
-      position: relative;
-    }
-    /* Camera preview simulation */
-    .phone-camera-bg {
-      position: absolute; inset: 0;
-      background: linear-gradient(160deg, #1a2a1a 0%, #0e1a0e 50%, #0d130d 100%);
-    }
-    /* Teleprompter overlay simulation */
+    .phone-screen { flex: 1; display: flex; flex-direction: column; padding-top: 40px; position: relative; }
+    .phone-camera-bg { position: absolute; inset: 0; background: linear-gradient(160deg, #1a2a1a 0%, #0e1a0e 50%, #0d130d 100%); }
     .phone-prompter {
       position: absolute; left: 12px; right: 12px; bottom: 80px;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(8px);
-      border-radius: 12px;
-      padding: 14px;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+      border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.1);
     }
     .phone-prompter-fade {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 32px;
+      position: absolute; top: 0; left: 0; right: 0; height: 32px;
       background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
       border-radius: 12px 12px 0 0;
     }
-    .phone-prompter-line {
-      height: 8px; background: rgba(255,255,255,0.7); border-radius: 4px; margin-bottom: 8px;
-    }
+    .phone-prompter-line { height: 8px; background: rgba(255,255,255,0.7); border-radius: 4px; margin-bottom: 8px; }
     .phone-prompter-line.short { width: 70%; }
     .phone-prompter-line.mid { width: 85%; }
     .phone-prompter-line.active { background: #fff; }
-    /* Record button */
     .phone-controls {
       position: absolute; bottom: 20px; left: 0; right: 0;
       display: flex; justify-content: center; align-items: center; gap: 24px;
@@ -190,16 +162,8 @@
       border: 3px solid rgba(255,255,255,0.8);
       display: flex; align-items: center; justify-content: center;
     }
-    .record-dot {
-      width: 22px; height: 22px; border-radius: 50%;
-      background: #ff3b30;
-    }
-    .ctrl-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.15);
-    }
-    /* Floating glow */
+    .record-dot { width: 22px; height: 22px; border-radius: 50%; background: #ff3b30; }
+    .ctrl-btn { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15); }
     .phone-glow {
       position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%);
       width: 200px; height: 80px;
@@ -209,85 +173,45 @@
 
     /* ── SECTION COMMON ── */
     section { padding: 100px 5%; }
-    .section-label {
-      font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 12px;
-    }
-    .section-title {
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 700; letter-spacing: -1px;
-      line-height: 1.15;
-      margin-bottom: 16px;
-    }
-    .section-desc {
-      font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.6;
-    }
+    .section-label { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .section-title { font-size: clamp(26px, 4vw, 44px); font-weight: 700; letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px; }
+    .section-desc { font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.6; }
 
-    /* ── FEATURES GRID ── */
+    /* ── FEATURES ── */
     #features { text-align: center; }
     #features .section-desc { margin: 0 auto 56px; }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 1100px; margin: 0 auto; }
     .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      text-align: left;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; text-align: left;
       transition: border-color .3s, transform .3s;
     }
     .feature-card:hover { border-color: rgba(91,143,249,0.3); transform: translateY(-3px); }
-    .feature-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: rgba(91,143,249,0.1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; margin-bottom: 16px;
-    }
+    .feature-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(91,143,249,0.1); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
     .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
     .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
     /* ── HOW IT WORKS ── */
-    #how-it-works {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .steps-wrap {
-      display: flex; gap: 48px;
-      align-items: flex-start;
-      max-width: 900px;
-      flex-wrap: wrap;
-    }
+    #how-it-works { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .steps-wrap { display: flex; gap: 48px; align-items: flex-start; max-width: 900px; flex-wrap: wrap; }
     .steps-wrap .section-title { max-width: 380px; }
     .steps { display: flex; flex-direction: column; gap: 24px; flex: 1; min-width: 260px; }
     .step { display: flex; gap: 16px; align-items: flex-start; }
     .step-num {
       width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(91,143,249,0.15);
-      border: 1px solid rgba(91,143,249,0.3);
+      background: rgba(91,143,249,0.15); border: 1px solid rgba(91,143,249,0.3);
       color: var(--accent); font-size: 13px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .step-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
     .step-body p { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
-    /* ── FOR WHOM ── */
+    /* ── AUDIENCE ── */
     #audience { text-align: center; }
-    .audience-grid {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
-      max-width: 800px; margin: 40px auto 0;
-    }
+    .audience-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 800px; margin: 40px auto 0; }
     .audience-tag {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 10px 20px; border-radius: 30px;
-      font-size: 14px; font-weight: 500;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 10px 20px; border-radius: 30px; font-size: 14px; font-weight: 500;
       transition: border-color .2s, color .2s;
     }
     .audience-tag:hover { border-color: var(--accent); color: var(--accent); }
@@ -295,38 +219,18 @@
     /* ── SPECS ── */
     #specs { max-width: 900px; margin: 0 auto; }
     #specs .section-title { text-align: center; margin-bottom: 48px; }
-    .specs-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .spec-item {
-      background: var(--surface);
-      padding: 24px 20px;
-    }
+    .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .spec-item { background: var(--surface); padding: 24px 20px; }
     .spec-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
     .spec-value { font-size: 17px; font-weight: 600; }
 
     /* ── CTA ── */
-    #cta {
-      text-align: center;
-      background: linear-gradient(160deg, rgba(91,143,249,0.07) 0%, transparent 60%);
-      border-top: 1px solid var(--border);
-    }
+    #cta { text-align: center; background: linear-gradient(160deg, rgba(91,143,249,0.07) 0%, transparent 60%); border-top: 1px solid var(--border); }
     #cta .section-title { margin-bottom: 12px; }
     #cta .section-desc { margin: 0 auto 36px; }
 
     /* ── FOOTER ── */
-    footer {
-      padding: 32px 5%;
-      border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
-    }
+    footer { padding: 32px 5%; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     footer .logo { font-size: 15px; font-weight: 600; color: var(--muted); }
     footer .footer-links { display: flex; gap: 24px; list-style: none; }
     footer .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
@@ -334,8 +238,11 @@
     .footer-copy { font-size: 12px; color: var(--muted); }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 680px) {
-      .nav-links { display: none; }
+    @media (max-width: 768px) {
+      .nav-center { display: none; }
+      .nav-cta { display: none; }
+    }
+    @media (max-width: 480px) {
       .steps-wrap { flex-direction: column; }
       footer { flex-direction: column; align-items: flex-start; }
     }
@@ -346,27 +253,43 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">Prompter Camera</div>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#how-it-works">How It Works</a></li>
-    <li><a href="#specs">Specs</a></li>
+  <ul class="nav-center">
+    <li><a href="#features" data-i18n="nav.features"></a></li>
+    <li><a href="#how-it-works" data-i18n="nav.howItWorks"></a></li>
+    <li><a href="#specs" data-i18n="nav.specs"></a></li>
   </ul>
-  <a class="nav-cta" href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener">Download Free</a>
+  <div class="nav-right">
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+      <button class="lang-btn" id="langBtn" onclick="toggleLangMenu()">
+        <span id="langCurrent">EN</span>
+        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <div class="lang-dropdown" id="langDropdown">
+        <div class="lang-option" onclick="setLang('en')"><span class="lang-flag">🇺🇸</span> English</div>
+        <div class="lang-option" onclick="setLang('ja')"><span class="lang-flag">🇯🇵</span> 日本語</div>
+        <div class="lang-option" onclick="setLang('ko')"><span class="lang-flag">🇰🇷</span> 한국어</div>
+        <div class="lang-option" onclick="setLang('zh-Hans')"><span class="lang-flag">🇨🇳</span> 简体中文</div>
+        <div class="lang-option" onclick="setLang('zh-Hant')"><span class="lang-flag">🇹🇼</span> 繁體中文</div>
+        <div class="lang-option" onclick="setLang('es')"><span class="lang-flag">🇪🇸</span> Español</div>
+      </div>
+    </div>
+    <a class="nav-cta" href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener" data-i18n="nav.download"></a>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">Available on App Store</div>
-  <h1>Record Video.<br><span>Read Your Script.</span></h1>
-  <p class="hero-sub">The teleprompter overlay floats transparently over your live camera. Flip pages hands-free with the volume button, Bluetooth remote, or keyboard — at your own pace.</p>
+  <div class="hero-badge" data-i18n="hero.badge"></div>
+  <h1><span data-i18n="hero.h1line1"></span><br><span data-i18n="hero.h1line2"></span></h1>
+  <p class="hero-sub" data-i18n="hero.sub"></p>
   <div class="hero-actions">
     <a class="btn-primary" href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener">
       <svg class="apple-icon" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-      Download on App Store
+      <span data-i18n="hero.btnDownload"></span>
     </a>
-    <a class="btn-secondary" href="#features">See Features</a>
+    <a class="btn-secondary" href="#features" data-i18n="hero.btnFeatures"></a>
   </div>
-
   <!-- Phone Mockup -->
   <div class="phone-wrap">
     <div class="phone-frame">
@@ -393,40 +316,16 @@
 
 <!-- FEATURES -->
 <section id="features">
-  <div class="section-label">Features</div>
-  <h2 class="section-title">Everything you need to<br>look great on camera</h2>
-  <p class="section-desc">Designed for creators who want professional results without the professional crew.</p>
+  <div class="section-label" data-i18n="features.label"></div>
+  <h2 class="section-title" data-i18n="features.title"></h2>
+  <p class="section-desc" data-i18n="features.desc"></p>
   <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">📜</div>
-      <h3>Teleprompter Overlay</h3>
-      <p>Your script floats transparently over the live camera preview. Adjustable frosted-glass blur (0–100%) keeps your footage clearly visible behind the text.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔘</div>
-      <h3>Hands-Free Page Flip</h3>
-      <p>Advance through your script with the volume button (+/−), a Bluetooth remote shutter, or the keyboard — no screen tapping needed.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎥</div>
-      <h3>4K HDR Recording</h3>
-      <p>Record up to 4K (3840×2160) with HEVC + HLG BT.2020 wide-color HDR, or H.264 SDR for universal compatibility.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔭</div>
-      <h3>All iPhone Lenses</h3>
-      <p>Switch freely between wide, ultra-wide, and telephoto lenses. Choose your preferred format and frame rate with a single tap.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎨</div>
-      <h3>Fully Customizable</h3>
-      <p>Pick any background and text color, adjust font size (12–60 pt), and fine-tune blur intensity — all with live preview.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">💾</div>
-      <h3>Auto-Save Everything</h3>
-      <p>Your script and all appearance settings are saved automatically. Pick up exactly where you left off every time you open the app.</p>
-    </div>
+    <div class="feature-card"><div class="feature-icon">📜</div><h3 data-i18n="features.f1.title"></h3><p data-i18n="features.f1.desc"></p></div>
+    <div class="feature-card"><div class="feature-icon">🔘</div><h3 data-i18n="features.f2.title"></h3><p data-i18n="features.f2.desc"></p></div>
+    <div class="feature-card"><div class="feature-icon">🎥</div><h3 data-i18n="features.f3.title"></h3><p data-i18n="features.f3.desc"></p></div>
+    <div class="feature-card"><div class="feature-icon">🔭</div><h3 data-i18n="features.f4.title"></h3><p data-i18n="features.f4.desc"></p></div>
+    <div class="feature-card"><div class="feature-icon">🎨</div><h3 data-i18n="features.f5.title"></h3><p data-i18n="features.f5.desc"></p></div>
+    <div class="feature-card"><div class="feature-icon">💾</div><h3 data-i18n="features.f6.title"></h3><p data-i18n="features.f6.desc"></p></div>
   </div>
 </section>
 
@@ -434,111 +333,405 @@
 <section id="how-it-works">
   <div class="steps-wrap">
     <div>
-      <div class="section-label">How it works</div>
-      <h2 class="section-title">Shoot professional videos in 3 easy steps</h2>
+      <div class="section-label" data-i18n="how.label"></div>
+      <h2 class="section-title" data-i18n="how.title"></h2>
     </div>
     <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <h4>Type your script</h4>
-          <p>Enter your script in the app before you shoot. Organize it into pages for easy navigation.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <h4>Set up &amp; customize</h4>
-          <p>Choose your lens, resolution, and frame rate. Adjust the teleprompter appearance to match your lighting and style.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <h4>Hit record &amp; read naturally</h4>
-          <p>Press record and start reading. Flip pages with the volume button or Bluetooth remote — your video is saved automatically to Photos when done.</p>
-        </div>
-      </div>
+      <div class="step"><div class="step-num">1</div><div class="step-body"><h4 data-i18n="how.s1.title"></h4><p data-i18n="how.s1.desc"></p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><h4 data-i18n="how.s2.title"></h4><p data-i18n="how.s2.desc"></p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><h4 data-i18n="how.s3.title"></h4><p data-i18n="how.s3.desc"></p></div></div>
     </div>
   </div>
 </section>
 
 <!-- AUDIENCE -->
 <section id="audience">
-  <div class="section-label">Perfect for</div>
-  <h2 class="section-title">Built for every type of creator</h2>
-  <div class="audience-grid">
-    <div class="audience-tag">YouTubers</div>
-    <div class="audience-tag">TikTokers</div>
-    <div class="audience-tag">Instagram Reels</div>
-    <div class="audience-tag">VLoggers</div>
-    <div class="audience-tag">Podcasters</div>
-    <div class="audience-tag">Business Presentations</div>
-    <div class="audience-tag">Online Courses</div>
-    <div class="audience-tag">Speech Practice</div>
-    <div class="audience-tag">Interview Prep</div>
-    <div class="audience-tag">News Anchors</div>
-  </div>
+  <div class="section-label" data-i18n="audience.label"></div>
+  <h2 class="section-title" data-i18n="audience.title"></h2>
+  <div class="audience-grid" id="audienceGrid"></div>
 </section>
 
 <!-- SPECS -->
 <section id="specs">
-  <h2 class="section-title">Technical Specs</h2>
+  <h2 class="section-title" data-i18n="specs.title"></h2>
   <div class="specs-grid">
-    <div class="spec-item">
-      <div class="spec-label">Max Resolution</div>
-      <div class="spec-value">4K (3840×2160)</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">Frame Rates</div>
-      <div class="spec-value">24 / 30 / 60 fps+</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">HDR Codec</div>
-      <div class="spec-value">HEVC + HLG BT.2020</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">SDR Codec</div>
-      <div class="spec-value">H.264 + P3/sRGB</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">iOS Requirement</div>
-      <div class="spec-value">iOS 17.0+</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">Font Size Range</div>
-      <div class="spec-value">12 – 60 pt</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">Blur Intensity</div>
-      <div class="spec-value">0 – 100%</div>
-    </div>
-    <div class="spec-item">
-      <div class="spec-label">Platform</div>
-      <div class="spec-value">iPhone</div>
-    </div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l1"></div><div class="spec-value">4K (3840×2160)</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l2"></div><div class="spec-value">24 / 30 / 60 fps+</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l3"></div><div class="spec-value">HEVC + HLG BT.2020</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l4"></div><div class="spec-value">H.264 + P3/sRGB</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l5"></div><div class="spec-value">iOS 17.0+</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l6"></div><div class="spec-value">12 – 60 pt</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l7"></div><div class="spec-value">0 – 100%</div></div>
+    <div class="spec-item"><div class="spec-label" data-i18n="specs.l8"></div><div class="spec-value">iPhone</div></div>
   </div>
 </section>
 
 <!-- CTA -->
 <section id="cta">
-  <h2 class="section-title">Start reading. Start recording.</h2>
-  <p class="section-desc">Free to download. Everything you need to create confident, natural-looking videos on your iPhone.</p>
-  <a class="btn-primary" href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener">
-    <svg class="apple-icon" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-    Download on App Store
-  </a>
+  <h2 class="section-title" data-i18n="cta.title"></h2>
+  <p class="section-desc" data-i18n="cta.desc"></p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener">
+      <svg class="apple-icon" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      <span data-i18n="cta.btnDownload"></span>
+    </a>
+    <a class="btn-secondary" href="./PrivacyPolicy.html">
+      <svg class="apple-icon" viewBox="0 0 24 24" style="opacity:.7"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 14c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08A7.24 7.24 0 0 1 12 19z"/></svg>
+      <span data-i18n="cta.btnPrivacy"></span>
+    </a>
+  </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
   <div class="logo">Prompter Camera</div>
   <ul class="footer-links">
-    <li><a href="./PrivacyPolicy.html">Privacy Policy</a></li>
+    <li><a href="./PrivacyPolicy.html" data-i18n="footer.privacy"></a></li>
     <li><a href="https://apps.apple.com/jp/app/%E3%83%97%E3%83%AD%E3%83%B3%E3%83%97%E3%82%BF%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9/id1608655385" target="_blank" rel="noopener">App Store</a></li>
   </ul>
-  <span class="footer-copy">&copy; 2024 Prompter Camera. All rights reserved.</span>
+  <span class="footer-copy" data-i18n="footer.copy"></span>
 </footer>
 
+<script>
+// ─── Translations ───────────────────────────────────────────────────────────
+const translations = {
+  en: {
+    nav: { features: "Features", howItWorks: "How It Works", specs: "Specs", download: "Download Free" },
+    hero: {
+      badge: "Available on App Store",
+      h1line1: "Record Video.",
+      h1line2: "Read Your Script.",
+      sub: "The teleprompter overlay floats transparently over your live camera. Flip pages hands-free with the volume button, Bluetooth remote, or keyboard — at your own pace.",
+      btnDownload: "Download on App Store",
+      btnFeatures: "See Features"
+    },
+    features: {
+      label: "Features",
+      title: "Everything you need to look great on camera",
+      desc: "Designed for creators who want professional results without the professional crew.",
+      f1: { title: "Teleprompter Overlay", desc: "Your script floats transparently over the live camera preview. Adjustable frosted-glass blur (0–100%) keeps your footage clearly visible behind the text." },
+      f2: { title: "Hands-Free Page Flip", desc: "Advance through your script with the volume button (+/−), a Bluetooth remote shutter, or the keyboard — no screen tapping needed." },
+      f3: { title: "4K HDR Recording", desc: "Record up to 4K (3840×2160) with HEVC + HLG BT.2020 wide-color HDR, or H.264 SDR for universal compatibility." },
+      f4: { title: "All iPhone Lenses", desc: "Switch freely between wide, ultra-wide, and telephoto lenses. Choose your preferred format and frame rate with a single tap." },
+      f5: { title: "Fully Customizable", desc: "Pick any background and text color, adjust font size (12–60 pt), and fine-tune blur intensity — all with live preview." },
+      f6: { title: "Auto-Save Everything", desc: "Your script and all appearance settings are saved automatically. Pick up exactly where you left off every time you open the app." }
+    },
+    how: {
+      label: "How it works",
+      title: "Shoot professional videos in 3 easy steps",
+      s1: { title: "Type your script", desc: "Enter your script in the app before you shoot. Organize it into pages for easy navigation." },
+      s2: { title: "Set up & customize", desc: "Choose your lens, resolution, and frame rate. Adjust the teleprompter appearance to match your lighting and style." },
+      s3: { title: "Hit record & read naturally", desc: "Press record and start reading. Flip pages with the volume button or Bluetooth remote — your video is saved automatically to Photos when done." }
+    },
+    audience: {
+      label: "Perfect for",
+      title: "Built for every type of creator",
+      tags: ["YouTubers", "TikTokers", "Instagram Reels", "VLoggers", "Podcasters", "Business Presentations", "Online Courses", "Speech Practice", "Interview Prep", "News Anchors"]
+    },
+    specs: { title: "Technical Specs", l1: "Max Resolution", l2: "Frame Rates", l3: "HDR Codec", l4: "SDR Codec", l5: "iOS Requirement", l6: "Font Size Range", l7: "Blur Intensity", l8: "Platform" },
+    cta: {
+      title: "Start reading. Start recording.",
+      desc: "Free to download. Everything you need to create confident, natural-looking videos on your iPhone.",
+      btnDownload: "Download on App Store",
+      btnPrivacy: "Privacy Policy"
+    },
+    footer: { privacy: "Privacy Policy", copy: "© 2024 Prompter Camera. All rights reserved." }
+  },
+
+  ja: {
+    nav: { features: "機能", howItWorks: "使い方", specs: "スペック", download: "無料ダウンロード" },
+    hero: {
+      badge: "App Store で公開中",
+      h1line1: "録画しながら、",
+      h1line2: "台本を読もう。",
+      sub: "テレプロンプターがカメラプレビューに透過表示。音量ボタン・Bluetooth リモート・キーボードでハンズフリーにページをめくれます。",
+      btnDownload: "App Store でダウンロード",
+      btnFeatures: "機能を見る"
+    },
+    features: {
+      label: "機能",
+      title: "カメラ映えに必要な、すべてが揃う",
+      desc: "プロのクルーなしで、プロ品質の動画を目指すクリエイター向けに設計されています。",
+      f1: { title: "テレプロンプターオーバーレイ", desc: "台本がカメラプレビューに透過表示されます。毛玻璃ブラー（0〜100%）で映像を保ちながら読み進められます。" },
+      f2: { title: "ハンズフリーページめくり", desc: "音量ボタン（+/−）、Bluetooth リモートシャッター、キーボードでページを操作。画面に触れる必要はありません。" },
+      f3: { title: "4K HDR 録画", desc: "HEVC + HLG BT.2020 のワイドカラー HDR、または H.264 SDR で最高 4K（3840×2160）録画。" },
+      f4: { title: "全 iPhone レンズ対応", desc: "広角・超広角・望遠を自由に切り替え。フォーマットとフレームレートをワンタップで選択できます。" },
+      f5: { title: "完全カスタマイズ", desc: "背景・文字色を自由に選び、フォントサイズ（12〜60pt）やブラー強度をリアルタイムプレビューで調整。" },
+      f6: { title: "自動保存", desc: "台本と外観設定はすべて自動保存。次回起動時に即座に復元されます。" }
+    },
+    how: {
+      label: "使い方",
+      title: "3 ステップでプロ品質の動画を撮ろう",
+      s1: { title: "台本を入力", desc: "撮影前にアプリへ台本を入力。ページに分けて管理できます。" },
+      s2: { title: "設定とカスタマイズ", desc: "レンズ・解像度・フレームレートを選択。テレプロンプターの外観をライティングやスタイルに合わせて調整。" },
+      s3: { title: "録画して自然に読む", desc: "録画を開始して台本を読むだけ。音量ボタンまたは Bluetooth リモートでページをめくり、終了すると自動でフォトライブラリに保存されます。" }
+    },
+    audience: {
+      label: "こんな方に",
+      title: "すべてのクリエイターのために",
+      tags: ["YouTuber", "TikToker", "Instagram Reels", "VLogger", "Podcast", "ビジネスプレゼン", "オンライン講義", "スピーチ練習", "面接対策", "アナウンサー志望"]
+    },
+    specs: { title: "技術仕様", l1: "最大解像度", l2: "フレームレート", l3: "HDR コーデック", l4: "SDR コーデック", l5: "iOS 要件", l6: "フォントサイズ", l7: "ブラー強度", l8: "プラットフォーム" },
+    cta: {
+      title: "読んで、撮ろう。",
+      desc: "無料ダウンロード。自信を持って、自然な表情で動画を撮るための機能がすべて揃っています。",
+      btnDownload: "App Store でダウンロード",
+      btnPrivacy: "プライバシーポリシー"
+    },
+    footer: { privacy: "プライバシーポリシー", copy: "© 2024 Prompter Camera. All rights reserved." }
+  },
+
+  ko: {
+    nav: { features: "기능", howItWorks: "사용법", specs: "스펙", download: "무료 다운로드" },
+    hero: {
+      badge: "App Store 출시",
+      h1line1: "촬영하면서,",
+      h1line2: "대본을 읽으세요.",
+      sub: "텔레프롬프터가 카메라 미리보기 위에 투명하게 표시됩니다. 볼륨 버튼, 블루투스 리모컨, 키보드로 핸즈프리 페이지 넘기기.",
+      btnDownload: "App Store에서 다운로드",
+      btnFeatures: "기능 보기"
+    },
+    features: {
+      label: "기능",
+      title: "카메라 앞에서 멋져 보이기 위한 모든 것",
+      desc: "전문 팀 없이도 프로급 결과를 원하는 크리에이터를 위해 설계되었습니다.",
+      f1: { title: "텔레프롬프터 오버레이", desc: "대본이 카메라 미리보기 위에 투명하게 표시됩니다. 블러(0~100%)로 영상이 선명하게 유지됩니다." },
+      f2: { title: "핸즈프리 페이지 넘기기", desc: "볼륨 버튼(+/−), 블루투스 리모컨, 키보드로 대본 페이지를 넘깁니다. 화면을 터치할 필요가 없습니다." },
+      f3: { title: "4K HDR 녹화", desc: "HEVC + HLG BT.2020 광색역 HDR 또는 H.264 SDR로 최대 4K(3840×2160) 녹화." },
+      f4: { title: "모든 iPhone 렌즈", desc: "광각, 초광각, 망원 렌즈를 자유롭게 전환. 포맷과 프레임레이트를 한 번의 탭으로 선택." },
+      f5: { title: "완전한 커스터마이즈", desc: "배경색과 텍스트 색상을 자유롭게 선택, 폰트 크기(12~60pt)와 블러 강도를 실시간 미리보기로 조절." },
+      f6: { title: "자동 저장", desc: "대본과 모든 외관 설정이 자동으로 저장됩니다. 앱을 열 때마다 바로 이어서 시작할 수 있습니다." }
+    },
+    how: {
+      label: "사용법",
+      title: "3단계로 전문적인 영상 촬영하기",
+      s1: { title: "대본 입력", desc: "촬영 전에 앱에 대본을 입력하세요. 페이지로 나눠 관리할 수 있습니다." },
+      s2: { title: "설정 및 커스터마이즈", desc: "렌즈, 해상도, 프레임레이트를 선택하세요. 텔레프롬프터 외관을 조명과 스타일에 맞게 조정하세요." },
+      s3: { title: "녹화 후 자연스럽게 읽기", desc: "녹화를 시작하고 대본을 읽으세요. 볼륨 버튼이나 블루투스 리모컨으로 페이지를 넘기면 완료 후 자동으로 사진 앱에 저장됩니다." }
+    },
+    audience: {
+      label: "이런 분께 추천",
+      title: "모든 크리에이터를 위해 만들어졌습니다",
+      tags: ["유튜버", "틱톡커", "인스타그램 릴스", "브이로거", "팟캐스터", "비즈니스 프레젠테이션", "온라인 강의", "스피치 연습", "면접 준비", "뉴스 앵커"]
+    },
+    specs: { title: "기술 사양", l1: "최대 해상도", l2: "프레임레이트", l3: "HDR 코덱", l4: "SDR 코덱", l5: "iOS 요구 사항", l6: "폰트 크기 범위", l7: "블러 강도", l8: "플랫폼" },
+    cta: {
+      title: "읽으면서, 촬영하세요.",
+      desc: "무료 다운로드. 자신감 넘치는 자연스러운 영상을 iPhone으로 만들기 위한 모든 것.",
+      btnDownload: "App Store에서 다운로드",
+      btnPrivacy: "개인정보 처리방침"
+    },
+    footer: { privacy: "개인정보 처리방침", copy: "© 2024 Prompter Camera. All rights reserved." }
+  },
+
+  "zh-Hans": {
+    nav: { features: "功能", howItWorks: "使用方法", specs: "规格", download: "免费下载" },
+    hero: {
+      badge: "已上架 App Store",
+      h1line1: "录制视频，",
+      h1line2: "同时读稿。",
+      sub: "提词器透明叠加在摄像头预览上方。通过音量键、蓝牙遥控或键盘免手持翻页，按自己的节奏进行。",
+      btnDownload: "在 App Store 下载",
+      btnFeatures: "查看功能"
+    },
+    features: {
+      label: "功能",
+      title: "上镜所需的一切",
+      desc: "专为无需专业团队、却追求专业效果的创作者设计。",
+      f1: { title: "提词器叠加显示", desc: "脚本透明叠加在摄像头预览上。可调节毛玻璃模糊（0～100%），保持画面清晰可见。" },
+      f2: { title: "免手持翻页", desc: "通过音量键（+/−）、蓝牙遥控快门或键盘翻页，无需触碰屏幕。" },
+      f3: { title: "4K HDR 录制", desc: "支持 HEVC + HLG BT.2020 宽色域 HDR，或 H.264 SDR，最高录制 4K（3840×2160）。" },
+      f4: { title: "支持全部 iPhone 镜头", desc: "自由切换广角、超广角和长焦镜头。一键选择画质格式和帧率。" },
+      f5: { title: "完全可自定义", desc: "自由选择背景和文字颜色，调节字体大小（12～60pt）和模糊强度，实时预览效果。" },
+      f6: { title: "自动保存", desc: "脚本和所有外观设置自动保存，每次打开应用即刻恢复上次状态。" }
+    },
+    how: {
+      label: "使用方法",
+      title: "3 步拍出专业视频",
+      s1: { title: "输入脚本", desc: "拍摄前在应用中输入脚本，按页面组织便于翻阅。" },
+      s2: { title: "设置与自定义", desc: "选择镜头、分辨率和帧率，调整提词器外观以适应你的拍摄风格。" },
+      s3: { title: "开拍并自然读稿", desc: "按下录制，开始读稿。用音量键或蓝牙遥控翻页，完成后视频自动保存至相册。" }
+    },
+    audience: {
+      label: "适合人群",
+      title: "为每一位创作者而生",
+      tags: ["YouTuber", "TikToker", "Instagram Reels", "Vlog 创作者", "播客", "商务演示", "在线课程", "演讲练习", "面试准备", "新闻主播"]
+    },
+    specs: { title: "技术规格", l1: "最大分辨率", l2: "帧率", l3: "HDR 编解码器", l4: "SDR 编解码器", l5: "iOS 要求", l6: "字体大小范围", l7: "模糊强度", l8: "平台" },
+    cta: {
+      title: "开始读稿。开始录制。",
+      desc: "免费下载。iPhone 上创作自然流畅视频所需的一切，尽在其中。",
+      btnDownload: "在 App Store 下载",
+      btnPrivacy: "隐私政策"
+    },
+    footer: { privacy: "隐私政策", copy: "© 2024 Prompter Camera. 保留所有权利。" }
+  },
+
+  "zh-Hant": {
+    nav: { features: "功能", howItWorks: "使用方法", specs: "規格", download: "免費下載" },
+    hero: {
+      badge: "已上架 App Store",
+      h1line1: "錄製影片，",
+      h1line2: "同時讀稿。",
+      sub: "提詞器透明疊加在相機預覽上方。透過音量鍵、藍牙遙控或鍵盤免手持翻頁，按自己的節奏進行。",
+      btnDownload: "在 App Store 下載",
+      btnFeatures: "查看功能"
+    },
+    features: {
+      label: "功能",
+      title: "上鏡所需的一切",
+      desc: "專為無需專業團隊、卻追求專業效果的創作者設計。",
+      f1: { title: "提詞器疊加顯示", desc: "腳本透明疊加在相機預覽上。可調節毛玻璃模糊（0～100%），保持畫面清晰可見。" },
+      f2: { title: "免手持翻頁", desc: "透過音量鍵（+/−）、藍牙遙控快門或鍵盤翻頁，無需觸碰螢幕。" },
+      f3: { title: "4K HDR 錄製", desc: "支援 HEVC + HLG BT.2020 寬色域 HDR，或 H.264 SDR，最高錄製 4K（3840×2160）。" },
+      f4: { title: "支援全部 iPhone 鏡頭", desc: "自由切換廣角、超廣角和長焦鏡頭。一鍵選擇畫質格式和幀率。" },
+      f5: { title: "完全可自訂", desc: "自由選擇背景和文字顏色，調節字體大小（12～60pt）和模糊強度，即時預覽效果。" },
+      f6: { title: "自動儲存", desc: "腳本和所有外觀設定自動儲存，每次開啟應用程式即刻恢復上次狀態。" }
+    },
+    how: {
+      label: "使用方法",
+      title: "3 步拍出專業影片",
+      s1: { title: "輸入腳本", desc: "拍攝前在應用程式中輸入腳本，按頁面組織便於翻閱。" },
+      s2: { title: "設定與自訂", desc: "選擇鏡頭、解析度和幀率，調整提詞器外觀以適應你的拍攝風格。" },
+      s3: { title: "開拍並自然讀稿", desc: "按下錄製，開始讀稿。用音量鍵或藍牙遙控翻頁，完成後影片自動儲存至相簿。" }
+    },
+    audience: {
+      label: "適合族群",
+      title: "為每一位創作者而生",
+      tags: ["YouTuber", "TikToker", "Instagram Reels", "Vlog 創作者", "Podcast", "商務簡報", "線上課程", "演講練習", "面試準備", "新聞主播"]
+    },
+    specs: { title: "技術規格", l1: "最大解析度", l2: "幀率", l3: "HDR 編解碼器", l4: "SDR 編解碼器", l5: "iOS 要求", l6: "字體大小範圍", l7: "模糊強度", l8: "平台" },
+    cta: {
+      title: "開始讀稿。開始錄製。",
+      desc: "免費下載。iPhone 上創作自然流暢影片所需的一切，盡在其中。",
+      btnDownload: "在 App Store 下載",
+      btnPrivacy: "隱私政策"
+    },
+    footer: { privacy: "隱私政策", copy: "© 2024 Prompter Camera. 保留所有權利。" }
+  },
+
+  es: {
+    nav: { features: "Funciones", howItWorks: "Cómo funciona", specs: "Especificaciones", download: "Descargar gratis" },
+    hero: {
+      badge: "Disponible en App Store",
+      h1line1: "Graba tu video.",
+      h1line2: "Lee tu guión.",
+      sub: "El teleprónter se superpone de forma transparente sobre la cámara en vivo. Pasa páginas sin manos con el botón de volumen, control remoto Bluetooth o teclado — a tu propio ritmo.",
+      btnDownload: "Descargar en App Store",
+      btnFeatures: "Ver funciones"
+    },
+    features: {
+      label: "Funciones",
+      title: "Todo lo que necesitas para lucir genial en cámara",
+      desc: "Diseñado para creadores que quieren resultados profesionales sin un equipo profesional.",
+      f1: { title: "Teleprónter superpuesto", desc: "Tu guión flota sobre la vista de cámara en vivo. El desenfoque ajustable (0–100%) mantiene tus tomas visibles detrás del texto." },
+      f2: { title: "Pasar páginas sin manos", desc: "Avanza por tu guión con el botón de volumen (+/−), un disparador remoto Bluetooth o el teclado — sin tocar la pantalla." },
+      f3: { title: "Grabación 4K HDR", desc: "Graba hasta 4K (3840×2160) con HEVC + HLG BT.2020, o H.264 SDR para compatibilidad universal." },
+      f4: { title: "Todos los objetivos del iPhone", desc: "Cambia entre los objetivos gran angular, ultra gran angular y teleobjetivo. Elige formato y frecuencia de imagen con un solo toque." },
+      f5: { title: "Totalmente personalizable", desc: "Elige cualquier color de fondo y texto, ajusta el tamaño de fuente (12–60 pt) y la intensidad de desenfoque con vista previa en vivo." },
+      f6: { title: "Guardado automático", desc: "Tu guión y todos los ajustes de apariencia se guardan automáticamente. Continúa donde lo dejaste cada vez que abras la app." }
+    },
+    how: {
+      label: "Cómo funciona",
+      title: "Graba videos profesionales en 3 pasos",
+      s1: { title: "Escribe tu guión", desc: "Ingresa tu guión en la app antes de grabar. Organízalo en páginas para fácil navegación." },
+      s2: { title: "Configura y personaliza", desc: "Elige tu objetivo, resolución y frecuencia de imagen. Ajusta la apariencia del teleprónter a tu estilo." },
+      s3: { title: "Graba y lee naturalmente", desc: "Presiona grabar y comienza a leer. Pasa páginas con el botón de volumen o control Bluetooth — tu video se guarda automáticamente en Fotos al terminar." }
+    },
+    audience: {
+      label: "Ideal para",
+      title: "Hecho para todo tipo de creadores",
+      tags: ["YouTubers", "TikTokers", "Instagram Reels", "VLoggers", "Podcasters", "Presentaciones de negocios", "Cursos online", "Práctica de discursos", "Preparación para entrevistas", "Presentadores de noticias"]
+    },
+    specs: { title: "Especificaciones técnicas", l1: "Resolución máxima", l2: "Frecuencia de imagen", l3: "Códec HDR", l4: "Códec SDR", l5: "Requisito iOS", l6: "Rango de tamaño de fuente", l7: "Intensidad de desenfoque", l8: "Plataforma" },
+    cta: {
+      title: "Empieza a leer. Empieza a grabar.",
+      desc: "Descarga gratuita. Todo lo que necesitas para crear videos naturales y seguros en tu iPhone.",
+      btnDownload: "Descargar en App Store",
+      btnPrivacy: "Política de privacidad"
+    },
+    footer: { privacy: "Política de privacidad", copy: "© 2024 Prompter Camera. Todos los derechos reservados." }
+  }
+};
+
+// ─── Lang labels shown in the button ────────────────────────────────────────
+const langLabels = { en: "EN", ja: "JA", ko: "KO", "zh-Hans": "ZH", "zh-Hant": "ZH", es: "ES" };
+const langHtmlAttrs = { en: "en", ja: "ja", ko: "ko", "zh-Hans": "zh-Hans", "zh-Hant": "zh-Hant", es: "es" };
+
+// ─── Resolve nested key like "hero.btnDownload" ──────────────────────────────
+function resolve(obj, key) {
+  return key.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : null), obj);
+}
+
+// ─── Apply translations ──────────────────────────────────────────────────────
+function applyLang(lang) {
+  const t = translations[lang] || translations.en;
+  document.documentElement.lang = langHtmlAttrs[lang] || 'en';
+
+  // Static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const val = resolve(t, el.dataset.i18n);
+    if (val !== null) el.textContent = val;
+  });
+
+  // Audience tags (dynamic)
+  const grid = document.getElementById('audienceGrid');
+  if (grid && t.audience && t.audience.tags) {
+    grid.innerHTML = t.audience.tags.map(tag => `<div class="audience-tag">${tag}</div>`).join('');
+  }
+
+  // Update lang button label
+  document.getElementById('langCurrent').textContent = langLabels[lang] || 'EN';
+
+  // Highlight active option
+  document.querySelectorAll('.lang-option').forEach(opt => {
+    opt.classList.toggle('active', opt.getAttribute('onclick') === `setLang('${lang}')`);
+  });
+}
+
+// ─── Language switcher UI ────────────────────────────────────────────────────
+function toggleLangMenu() {
+  const btn = document.getElementById('langBtn');
+  const dd = document.getElementById('langDropdown');
+  const open = dd.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+function setLang(lang) {
+  localStorage.setItem('lang', lang);
+  applyLang(lang);
+  document.getElementById('langDropdown').classList.remove('open');
+  document.getElementById('langBtn').classList.remove('open');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.lang-switcher')) {
+    document.getElementById('langDropdown').classList.remove('open');
+    document.getElementById('langBtn').classList.remove('open');
+  }
+});
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+(function init() {
+  const saved = localStorage.getItem('lang');
+  const browserLang = navigator.language || '';
+  let lang = 'en';
+  if (saved && translations[saved]) {
+    lang = saved;
+  } else if (browserLang.startsWith('ja')) {
+    lang = 'ja';
+  } else if (browserLang.startsWith('ko')) {
+    lang = 'ko';
+  } else if (browserLang === 'zh-TW' || browserLang === 'zh-HK' || browserLang.startsWith('zh-Hant')) {
+    lang = 'zh-Hant';
+  } else if (browserLang.startsWith('zh')) {
+    lang = 'zh-Hans';
+  } else if (browserLang.startsWith('es')) {
+    lang = 'es';
+  }
+  applyLang(lang);
+})();
+</script>
 </body>
 </html>
